@@ -1,0 +1,165 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  HEADTEACHER
+  TEACHER
+  STUDENT
+  PARENT
+}
+
+enum Level {
+  KG
+  PRIMARY_1
+  PRIMARY_2
+  PRIMARY_3
+  PRIMARY_4
+  PRIMARY_5
+  PRIMARY_6
+  JHS_1
+  JHS_2
+  JHS_3
+  SHS_1
+  SHS_2
+  SHS_3
+}
+
+enum Term {
+  TERM_1
+  TERM_2
+  TERM_3
+}
+
+model User {
+  id          Int      @id @default(autoincrement())
+  email       String   @unique
+  password    String
+  role        Role
+  firstName   String
+  lastName    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  teacher     Teacher?
+  student     Student?
+  parent      Parent?
+}
+
+model Student {
+  id            Int      @id @default(autoincrement())
+  user          User     @relation(fields: [userId], references: [id])
+  userId        Int      @unique
+  dob           DateTime
+  gender        String
+  ghanaCard     String?
+  nhisId        String?
+  level         Level
+  admissionDate DateTime
+  status        String
+  house         String?
+  isBoarding    Boolean  @default(false)
+  admissionType String   @default("day")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  assessments   Assessment[]
+  attendances   Attendance[]
+  parent        Parent?  @relation(fields: [parentId], references: [id])
+  parentId      Int?
+}
+
+model Teacher {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int      @unique
+  subjects  String[]
+  assignedClasses String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Parent {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int      @unique
+  phone     String
+  children  Student[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Assessment {
+  id            Int      @id @default(autoincrement())
+  student       Student  @relation(fields: [studentId], references: [id])
+  studentId     Int
+  term          Term
+  subject       String
+  caScore       Float
+  examScore     Float
+  totalScore    Float
+  grade         String
+  remarks       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Attendance {
+  id        Int      @id @default(autoincrement())
+  student   Student  @relation(fields: [studentId], references: [id])
+  studentId Int
+  date      DateTime
+  status    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model FeePayment {
+  id             Int      @id @default(autoincrement())
+  student        Student  @relation(fields: [studentId], references: [id])
+  studentId      Int
+  amount         Float
+  category       String
+  paidVia        String
+  transactionId  String
+  paidAt         DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model TimetableEntry {
+  id           Int      @id @default(autoincrement())
+  level        Level
+  className    String
+  dayOfWeek    String
+  period       Int
+  subject      String
+  teacher      Teacher? @relation(fields: [teacherId], references: [id])
+  teacherId    Int?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Announcement {
+  id          Int      @id @default(autoincrement())
+  title       String
+  body        String
+  audience    String   @default("ALL")
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  createdById Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model SmsLog {
+  id        Int      @id @default(autoincrement())
+  to        String
+  message   String
+  status    String   @default("SENT")
+  provider  String   @default("MTN MoMo")
+  createdAt DateTime @default(now())
+}
